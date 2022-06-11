@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\SaveForLaterController;
 use App\Http\Controllers\ShopController;
@@ -36,9 +37,12 @@ Route::post('/saveForLater/switchSaveForLater/{product}',
 Route::delete('/saveForLater/{product}', [SaveForLaterController::class, 'destroy'])
     ->name('saveForLater.destroy');
 
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
 Route::get('empty', function (){
     Cart::instance('saveForLater')->destroy();
 });
 
-Route::view('/checkout', 'checkout');
+
 Route::view('/thankyou', 'thankyou');
