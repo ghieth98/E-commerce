@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Cartalyst\Stripe\Exception\CardErrorException;
 use Cartalyst\Stripe\Laravel\Facades\Stripe;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Illuminate\Http\Request;
@@ -33,27 +34,34 @@ class CheckoutController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
+        $contents = Cart::content()->map(function ($item){
+           return $item->model->slug.', '.$item->qty;
+        })->values()->toJson();
         try {
-            $charge = Stripe::charges()->create([
-               'amount' => Cart::total()/100,
-               'currency' => 'EP',
-               'source' => $request->stripeToken,
-               'description' => 'Order',
-               'receipt_email' => $request->email,
-               'meta data' => [
-                   //change the order id after we start using db
-
-//                   'contents' => $contents,
-//                   'quantity' => Cart::instance('default')->count(),
-               ]
-            ]);
-            return back()->with('success_message', 'Thanks for using our store ,The order on the way');
-        }catch (\Exception $e){
-
+        $charge = Stripe::charges()->create([
+            'amount' => Cart::total() / 100,
+            'currency' => 'CAD',
+            'source' => $request->stripeToken,
+            'description' => 'Order',
+            'receipt_email' => $request->email,
+            'metadata' => [
+//                //change to Order ID after we start using DB
+                'contents' => $contents,
+                'quantity' => Cart::instance('default')->count(),
+            ],
+        ]);
+            // SUCCESSFUL
+            Cart::instance('default')->destroy();
+            // return back()->with('success_message', 'Thank you! Your payment has been successfully accepted!');
+            return redirect()->route('confirmation.index')
+                ->with('success_message', 'Thank you! Your payment has been successfully accepted!');
+            //TODO  Check the documentation for the exception
+        } catch (CardErrorException $e) {
+            return back()->withErrors('Error! ' . $e->getMessage());
         }
     }
 

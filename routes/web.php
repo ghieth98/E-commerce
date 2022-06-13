@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ConfirmationController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\SaveForLaterController;
 use App\Http\Controllers\ShopController;
@@ -45,4 +46,4 @@ Route::get('empty', function (){
 });
 
 
-Route::view('/thankyou', 'thankyou');
+Route::get('/thankyou', [ConfirmationController::class, 'index'])->name('confirmation.index');
