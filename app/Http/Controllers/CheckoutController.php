@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderPlaced;
 use Cartalyst\Stripe\Exception\CardErrorException;
 use Cartalyst\Stripe\Laravel\Facades\Stripe;
 use Gloudemans\Shoppingcart\Facades\Cart;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return Response
+     * @return Application|Factory|View
      */
     public function index()
     {
@@ -23,7 +29,7 @@ class CheckoutController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return Response
+     * @return void
      */
     public function create()
     {
@@ -33,8 +39,8 @@ class CheckoutController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * @param Request $request
+     * @return RedirectResponse
      */
     public function store(Request $request)
     {
@@ -56,9 +62,11 @@ class CheckoutController extends Controller
         ]);
             // SUCCESSFUL
             Cart::instance('default')->destroy();
+            Mail::send(new OrderPlaced());
             // return back()->with('success_message', 'Thank you! Your payment has been successfully accepted!');
             return redirect()->route('confirmation.index')
-                ->with('success_message', 'Thank you! Your payment has been successfully accepted!');
+                ->with('success_message',
+                    'Thank you! Your payment has been successfully accepted!');
             //TODO  Check the documentation for the exception
         } catch (CardErrorException $e) {
             return back()->withErrors('Error! ' . $e->getMessage());
@@ -90,7 +98,7 @@ class CheckoutController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param Request $request
      * @param  int  $id
      * @return Response
      */

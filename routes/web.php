@@ -47,3 +47,8 @@ Route::get('empty', function (){
 
 
 Route::get('/thankyou', [ConfirmationController::class, 'index'])->name('confirmation.index');
+
+
+Route::group(['prefix' => 'admin'], function () {
+    Voyager::routes();
+});
