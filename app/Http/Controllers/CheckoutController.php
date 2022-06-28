@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 class CheckoutController extends Controller
 {
@@ -23,7 +25,12 @@ class CheckoutController extends Controller
      */
     public function index()
     {
-        return view('checkout');
+        return view('checkout')->with([
+            'discount' => $this->getNumbers()->get('discount'),
+            'newSubtotal' => $this->getNumbers()->get('newSubtotal'),
+            'newTax' => $this->getNumbers()->get('newTax'),
+            'newTotal' => $this->getNumbers()->get('newTotal'),
+        ]);
     }
 
     /**
@@ -49,7 +56,7 @@ class CheckoutController extends Controller
         })->values()->toJson();
         try {
         $charge = Stripe::charges()->create([
-            'amount' => Cart::total() / 100,
+            'amount' => $this->getNumbers()->get('newTotal') / 100,
             'currency' => 'CAD',
             'source' => $request->stripeToken,
             'description' => 'Order',
@@ -58,11 +65,13 @@ class CheckoutController extends Controller
 //                //change to Order ID after we start using DB
                 'contents' => $contents,
                 'quantity' => Cart::instance('default')->count(),
+                'discount' => collect(session()->get('coupon'))->toJson(),
             ],
         ]);
             // SUCCESSFUL
             Cart::instance('default')->destroy();
-            Mail::send(new OrderPlaced());
+            session()->forget('coupon');
+//            Mail::send(new OrderPlaced());
             // return back()->with('success_message', 'Thank you! Your payment has been successfully accepted!');
             return redirect()->route('confirmation.index')
                 ->with('success_message',
@@ -116,5 +125,27 @@ class CheckoutController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    /**
+     * @return array
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    private function getNumbers()
+    {
+        $tax = config('cart.tax') / 100;
+        $discount = session()->get('coupon')['discount'] ?? 0;
+        $newSubtotal = (Cart::subtotal() - $discount);
+        $newTax = $newSubtotal * $tax;
+        $newTotal = $newSubtotal * (1 + $tax);
+        return collect([
+            'tax' => $tax,
+            'discount' => $discount,
+            'newSubtotal' => $newSubtotal,
+            'newTax' => $newTax,
+            'newTotal' => $newTotal,
+
+        ]);
     }
 }
