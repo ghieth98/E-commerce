@@ -12,6 +12,10 @@ class User extends \TCG\Voyager\Models\User
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
     /**
      * The attributes that are mass assignable.
      *
