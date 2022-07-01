@@ -36,20 +36,12 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return void
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param Request $request
      * @return RedirectResponse
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     public function store(Request $request)
     {
@@ -64,37 +56,15 @@ class CheckoutController extends Controller
             'description' => 'Order',
             'receipt_email' => $request->email,
             'metadata' => [
-//                //change to Order ID after we start using DB
+                //change to Order ID after we start using DB
                 'contents' => $contents,
                 'quantity' => Cart::instance('default')->count(),
                 'discount' => collect(session()->get('coupon'))->toJson(),
             ],
         ]);
             //TODO insert into order table
-            $order = Order::create([
-                'billing_email'=>$request->email,
-                'billing_name'=>$request->name,
-                'billing_address'=>$request->address,
-                'billing_city'=>$request->city,
-                'billing_province'=>$request->province,
-                'billing_postcode'=>$request->postcode,
-                'billing_phone'=>$request->phone,
-                'billing_name_on_card'=>$request->name_on_card,
-                'billing_discount'=> $this->getNumbers()->get('discount'),
-                'billing_discount_code'=> $this->getNumbers()->get('code'),
-                'billing_subtotal'=> $this->getNumbers()->get('newSubtotal'),
-                'billing_tax'=> $this->getNumbers()->get('newTax'),
-                'billing_total'=> $this->getNumbers()->get('newTotal'),
-                'error' => null,
-            ]);
-            //TODO insert into pivot table order_product
-            foreach (Cart::content() as $item) {
-                OrderProduct::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->model->id,
-                    'quantity' => $item->qty,
-                ]);
-            }
+            $this->addToOrderTable($request, null);
+
             // SUCCESSFUL
             Cart::instance('default')->destroy();
             session()->forget('coupon');
@@ -103,21 +73,11 @@ class CheckoutController extends Controller
             return redirect()->route('confirmation.index')
                 ->with('success_message',
                     'Thank you! Your payment has been successfully accepted!');
-            //TODO  Check the documentation for the exception
-        } catch (CardErrorException $e) {
-            return back()->withErrors('Error! ' . $e->getMessage());
-        }
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function destroy($id)
-    {
-        //
+        } catch (CardErrorException $e) {
+            $this->addToOrderTable($request, $e->getMessage());
+            return back()->withErrors('Error! '. $e->getMessage());
+        }
     }
 
     /**
@@ -142,5 +102,41 @@ class CheckoutController extends Controller
             'newTotal' => $newTotal,
 
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $error
+     * @return void
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
+    protected function addToOrderTable(Request $request, $error): void
+    {
+        $order = Order::create([
+            'billing_email' => $request->email,
+            'billing_name' => $request->name,
+            'billing_address' => $request->address,
+            'billing_city' => $request->city,
+            'billing_province' => $request->province,
+            'billing_postalcode' => $request->postalcode,
+            'billing_phone' => $request->phone,
+            'billing_name_on_card' => $request->name_on_card,
+            'billing_discount' => $this->getNumbers()->get('discount'),
+            'billing_discount_code' => $this->getNumbers()->get('code'),
+            'billing_subtotal' => $this->getNumbers()->get('newSubtotal'),
+            'billing_tax' => $this->getNumbers()->get('newTax'),
+            'billing_total' => $this->getNumbers()->get('newTotal'),
+            'error' => $error,
+        ]);
+        //TODO insert into pivot table order_product
+
+        foreach (Cart::content() as $item) {
+            OrderProduct::create([
+                'order_id' => $order->id,
+                'product_id' => $item->model->id,
+                'quantity' => $item->qty,
+            ]);
+        }
     }
 }

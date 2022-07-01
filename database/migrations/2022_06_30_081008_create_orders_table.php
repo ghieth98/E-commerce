@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('billing_address');
             $table->string('billing_city');
             $table->string('billing_province');
-            $table->string('billing_postcode');
+            $table->string('billing_postalcode');
             $table->string('billing_phone');
             $table->string('billing_name_on_card');
             $table->integer('billing_discount')->default(0);
