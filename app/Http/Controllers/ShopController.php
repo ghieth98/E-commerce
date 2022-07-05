@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ShopController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     * @return Application|Factory|View
      */
     public function index()
     {
@@ -44,7 +48,7 @@ class ShopController extends Controller
      * Display the specified resource.
      *
      * @param  string  $slug
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     * @return Application|Factory|View
      */
     public function show($slug)
     {
@@ -55,5 +59,21 @@ class ShopController extends Controller
             'product' => $product,
             'mightAlsoLike' => $mightAlsoLike,
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @return Application|Factory|View
+     */
+    public function search(Request $request)
+    {
+        DB::statement("SET sql_mode = '' ");
+        $request->validate([
+            'query' => 'required|min:3'
+        ]);
+
+        $query = $request->input('query');
+        $products = Product::search($query)->paginate(10);
+        return view('search-results')->with('products', $products);
     }
 }

@@ -27,6 +27,7 @@ Route::get('/', [LandingPageController::class, 'index'])->name('landing-page');
 //ShopController
 Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/shop/{product}', [ShopController::class, 'show'])->name('shop.show');
+Route::get('/search', [ShopController::class, 'search'])->name('search');
 
 //Cart Controller
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -42,7 +43,7 @@ Route::post('/saveForLater/switchSaveForLater/{product}',
 Route::delete('/saveForLater/{product}', [SaveForLaterController::class, 'destroy'])
     ->name('saveForLater.destroy');
 
-//CheckoutControllers
+//CouponsControllers
 Route::post('/coupon', [CouponsController::class, 'store'])->name('coupon.store');
 Route::delete('/coupon', [CouponsController::class, 'destroy'])->name('coupon.destroy');
 
