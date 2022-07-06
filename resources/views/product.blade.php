@@ -23,6 +23,7 @@
         <div class="product-section-information">
             <h1 class="product-section-title">{{ $product->name }}</h1>
             <div class="product-section-subtitle">{{ $product->details }}</div>
+            <div>{{$inStock}}</div>
             <div class="product-section-price">{{ $product->presentPrice() }}</div>
 
             <p>
@@ -31,12 +32,12 @@
 
             <p>&nbsp;</p>
 
-
+                @if($product->quantity > 0)
                 <form action="{{ route('cart.store', $product) }}" method="POST">
                     {{ csrf_field() }}
                     <button type="submit" class="button button-plain">Add to Cart</button>
                 </form>
-
+            @endif
         </div>
     </div> <!-- end product-section -->
 
