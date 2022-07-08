@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\OrderPlaced;
 use App\Models\Order;
 use App\Models\OrderProduct;
+use App\Models\Product;
 use Cartalyst\Stripe\Exception\CardErrorException;
 use Cartalyst\Stripe\Laravel\Facades\Stripe;
 use Gloudemans\Shoppingcart\Facades\Cart;
@@ -64,12 +65,13 @@ class CheckoutController extends Controller
         ]);
             //TODO insert into order table
             $this->addToOrderTable($request, null);
+            Mail::send(new OrderPlaced());
 
+            $this->decreaseQuantity();
             // SUCCESSFUL
             Cart::instance('default')->destroy();
             session()->forget('coupon');
-//            Mail::send(new OrderPlaced());
-            // return back()->with('success_message', 'Thank you! Your payment has been successfully accepted!');
+
             return redirect()->route('confirmation.index')
                 ->with('success_message',
                     'Thank you! Your payment has been successfully accepted!');
@@ -137,6 +139,15 @@ class CheckoutController extends Controller
                 'product_id' => $item->model->id,
                 'quantity' => $item->qty,
             ]);
+        }
+    }
+
+    protected function decreaseQuantity()
+    {
+        foreach (Cart::content() as $item) {
+            $product = Product::find($item->model->id);
+
+            $product->update(['quantity' => $product->quantity - $item->qty]);
         }
     }
 }
