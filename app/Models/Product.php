@@ -54,7 +54,7 @@ class Product extends Model
      */
     public function presentPrice(): string
     {
-        return 'E.P '.number_format($this->price / 100, 2);
+        return 'E.P ' . number_format($this->price / 100, 2);
     }
 
     /**
