@@ -1,8 +1,11 @@
 <ul>
     @guest
-        <li><a href="{{ route('register') }}">Sign Up</a></li>
+        <li><a href="{{ route('register') }}">SignUp</a></li>
         <li><a href="{{ route('login') }}">Login</a></li>
     @else
+        <li>
+            <a href="{{route('users.edit')}}">Dashboard</a>
+        </li>
         <li>
             <a href="{{ route('logout') }}"
                onclick="event.preventDefault();

@@ -1,5 +1,7 @@
 <?php
 
+use Carbon\Carbon;
+
 /**
  * @param $price
  * @return string
@@ -25,4 +27,8 @@ function getInStock($quantity): string
     }
 
     return $inStock;
+}
+function presentDate($date)
+{
+    return Carbon::parse($date)->format('d/m/y');
 }
